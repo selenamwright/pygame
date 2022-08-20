@@ -9,6 +9,53 @@ from pygame.math import Vector2, Vector3
 IS_PYPY = "PyPy" == platform.python_implementation()
 
 
+class MathModuleTest(unittest.TestCase):
+    """Math module tests."""
+
+    def test_clamp(self):
+        """Test clamp function."""
+
+        # Int tests
+        # Test going above max
+        result = pygame.math.clamp(10, 1, 5)
+        self.assertEqual(result, 5)
+        # Test going below min
+        result = pygame.math.clamp(-10, 1, 5)
+        self.assertEqual(result, 1)
+        # Test equal to max
+        result = pygame.math.clamp(5, 1, 5)
+        self.assertEqual(result, 5)
+        # Test equal to min
+        result = pygame.math.clamp(1, 1, 5)
+        self.assertEqual(result, 1)
+        # Test between min and max
+        result = pygame.math.clamp(3, 1, 5)
+        self.assertEqual(result, 3)
+
+        # Float tests
+        # Test going above max
+        result = pygame.math.clamp(10.0, 1.12, 5.0)
+        self.assertAlmostEqual(result, 5.0)
+        # Test going below min
+        result = pygame.math.clamp(-10.0, 1.12, 5.0)
+        self.assertAlmostEqual(result, 1.12)
+        # Test equal to max
+        result = pygame.math.clamp(5.0, 1.12, 5.0)
+        self.assertAlmostEqual(result, 5.0)
+        # Test equal to min
+        result = pygame.math.clamp(1.12, 1.12, 5.0)
+        self.assertAlmostEqual(result, 1.12)
+        # Test between min and max
+        result = pygame.math.clamp(2.5, 1.12, 5.0)
+        self.assertAlmostEqual(result, 2.5)
+
+        # Error tests
+        # Not enough args
+        self.assertRaises(TypeError, pygame.math.clamp, 10)
+        # Non numeric args
+        self.assertRaises(TypeError, pygame.math.clamp, "hello", "py", "thon")
+
+
 class Vector2TypeTest(unittest.TestCase):
     def setUp(self):
         self.zeroVec = Vector2()
@@ -562,21 +609,49 @@ class Vector2TypeTest(unittest.TestCase):
     def test_distance_to(self):
         diff = self.v1 - self.v2
         self.assertEqual(self.e1.distance_to(self.e2), math.sqrt(2))
+        self.assertEqual(self.e1.distance_to((0, 1)), math.sqrt(2))
+        self.assertEqual(self.e1.distance_to([0, 1]), math.sqrt(2))
         self.assertAlmostEqual(
             self.v1.distance_to(self.v2), math.sqrt(diff.x * diff.x + diff.y * diff.y)
         )
+        self.assertAlmostEqual(
+            self.v1.distance_to(self.t2), math.sqrt(diff.x * diff.x + diff.y * diff.y)
+        )
+        self.assertAlmostEqual(
+            self.v1.distance_to(self.l2), math.sqrt(diff.x * diff.x + diff.y * diff.y)
+        )
         self.assertEqual(self.v1.distance_to(self.v1), 0)
+        self.assertEqual(self.v1.distance_to(self.t1), 0)
+        self.assertEqual(self.v1.distance_to(self.l1), 0)
+        self.assertEqual(self.v1.distance_to(self.t2), self.v2.distance_to(self.t1))
+        self.assertEqual(self.v1.distance_to(self.l2), self.v2.distance_to(self.l1))
         self.assertEqual(self.v1.distance_to(self.v2), self.v2.distance_to(self.v1))
 
     def test_distance_squared_to(self):
         diff = self.v1 - self.v2
         self.assertEqual(self.e1.distance_squared_to(self.e2), 2)
+        self.assertEqual(self.e1.distance_squared_to((0, 1)), 2)
+        self.assertEqual(self.e1.distance_squared_to([0, 1]), 2)
         self.assertAlmostEqual(
             self.v1.distance_squared_to(self.v2), diff.x * diff.x + diff.y * diff.y
         )
+        self.assertAlmostEqual(
+            self.v1.distance_squared_to(self.t2), diff.x * diff.x + diff.y * diff.y
+        )
+        self.assertAlmostEqual(
+            self.v1.distance_squared_to(self.l2), diff.x * diff.x + diff.y * diff.y
+        )
         self.assertEqual(self.v1.distance_squared_to(self.v1), 0)
+        self.assertEqual(self.v1.distance_squared_to(self.t1), 0)
+        self.assertEqual(self.v1.distance_squared_to(self.l1), 0)
         self.assertEqual(
             self.v1.distance_squared_to(self.v2), self.v2.distance_squared_to(self.v1)
+        )
+        self.assertEqual(
+            self.v1.distance_squared_to(self.t2), self.v2.distance_squared_to(self.t1)
+        )
+        self.assertEqual(
+            self.v1.distance_squared_to(self.l2), self.v2.distance_squared_to(self.l1)
         )
 
     def test_update(self):
@@ -626,242 +701,6 @@ class Vector2TypeTest(unittest.TestCase):
         # but we don't have vector4 or above... so tuple.
         self.assertEqual(type(self.v1.xyxy), tuple)
         self.assertEqual(type(self.v1.xyxyx), tuple)
-
-    def test_elementwise(self):
-        # behaviour for "elementwise op scalar"
-        self.assertEqual(
-            self.v1.elementwise() + self.s1, (self.v1.x + self.s1, self.v1.y + self.s1)
-        )
-        self.assertEqual(
-            self.v1.elementwise() - self.s1, (self.v1.x - self.s1, self.v1.y - self.s1)
-        )
-        self.assertEqual(
-            self.v1.elementwise() * self.s2, (self.v1.x * self.s2, self.v1.y * self.s2)
-        )
-        self.assertEqual(
-            self.v1.elementwise() / self.s2, (self.v1.x / self.s2, self.v1.y / self.s2)
-        )
-        self.assertEqual(
-            self.v1.elementwise() // self.s1,
-            (self.v1.x // self.s1, self.v1.y // self.s1),
-        )
-        self.assertEqual(
-            self.v1.elementwise() ** self.s1,
-            (self.v1.x**self.s1, self.v1.y**self.s1),
-        )
-        self.assertEqual(
-            self.v1.elementwise() % self.s1, (self.v1.x % self.s1, self.v1.y % self.s1)
-        )
-        self.assertEqual(
-            self.v1.elementwise() > self.s1, self.v1.x > self.s1 and self.v1.y > self.s1
-        )
-        self.assertEqual(
-            self.v1.elementwise() < self.s1, self.v1.x < self.s1 and self.v1.y < self.s1
-        )
-        self.assertEqual(
-            self.v1.elementwise() == self.s1,
-            self.v1.x == self.s1 and self.v1.y == self.s1,
-        )
-        self.assertEqual(
-            self.v1.elementwise() != self.s1,
-            self.v1.x != self.s1 and self.v1.y != self.s1,
-        )
-        self.assertEqual(
-            self.v1.elementwise() >= self.s1,
-            self.v1.x >= self.s1 and self.v1.y >= self.s1,
-        )
-        self.assertEqual(
-            self.v1.elementwise() <= self.s1,
-            self.v1.x <= self.s1 and self.v1.y <= self.s1,
-        )
-        self.assertEqual(
-            self.v1.elementwise() != self.s1,
-            self.v1.x != self.s1 and self.v1.y != self.s1,
-        )
-        # behaviour for "scalar op elementwise"
-        self.assertEqual(5 + self.v1.elementwise(), Vector2(5, 5) + self.v1)
-        self.assertEqual(3.5 - self.v1.elementwise(), Vector2(3.5, 3.5) - self.v1)
-        self.assertEqual(7.5 * self.v1.elementwise(), 7.5 * self.v1)
-        self.assertEqual(
-            -3.5 / self.v1.elementwise(), (-3.5 / self.v1.x, -3.5 / self.v1.y)
-        )
-        self.assertEqual(
-            -3.5 // self.v1.elementwise(), (-3.5 // self.v1.x, -3.5 // self.v1.y)
-        )
-        self.assertEqual(
-            -(3.5 ** self.v1.elementwise()), (-(3.5**self.v1.x), -(3.5**self.v1.y))
-        )
-        self.assertEqual(3 % self.v1.elementwise(), (3 % self.v1.x, 3 % self.v1.y))
-        self.assertEqual(2 < self.v1.elementwise(), 2 < self.v1.x and 2 < self.v1.y)
-        self.assertEqual(2 > self.v1.elementwise(), 2 > self.v1.x and 2 > self.v1.y)
-        self.assertEqual(1 == self.v1.elementwise(), 1 == self.v1.x and 1 == self.v1.y)
-        self.assertEqual(1 != self.v1.elementwise(), 1 != self.v1.x and 1 != self.v1.y)
-        self.assertEqual(2 <= self.v1.elementwise(), 2 <= self.v1.x and 2 <= self.v1.y)
-        self.assertEqual(
-            -7 >= self.v1.elementwise(), -7 >= self.v1.x and -7 >= self.v1.y
-        )
-        self.assertEqual(
-            -7 != self.v1.elementwise(), -7 != self.v1.x and -7 != self.v1.y
-        )
-
-        # behaviour for "elementwise op vector"
-        self.assertEqual(type(self.v1.elementwise() * self.v2), type(self.v1))
-        self.assertEqual(self.v1.elementwise() + self.v2, self.v1 + self.v2)
-        self.assertEqual(self.v1.elementwise() + self.v2, self.v1 + self.v2)
-        self.assertEqual(self.v1.elementwise() - self.v2, self.v1 - self.v2)
-        self.assertEqual(
-            self.v1.elementwise() * self.v2,
-            (self.v1.x * self.v2.x, self.v1.y * self.v2.y),
-        )
-        self.assertEqual(
-            self.v1.elementwise() / self.v2,
-            (self.v1.x / self.v2.x, self.v1.y / self.v2.y),
-        )
-        self.assertEqual(
-            self.v1.elementwise() // self.v2,
-            (self.v1.x // self.v2.x, self.v1.y // self.v2.y),
-        )
-        self.assertEqual(
-            self.v1.elementwise() ** self.v2,
-            (self.v1.x**self.v2.x, self.v1.y**self.v2.y),
-        )
-        self.assertEqual(
-            self.v1.elementwise() % self.v2,
-            (self.v1.x % self.v2.x, self.v1.y % self.v2.y),
-        )
-        self.assertEqual(
-            self.v1.elementwise() > self.v2,
-            self.v1.x > self.v2.x and self.v1.y > self.v2.y,
-        )
-        self.assertEqual(
-            self.v1.elementwise() < self.v2,
-            self.v1.x < self.v2.x and self.v1.y < self.v2.y,
-        )
-        self.assertEqual(
-            self.v1.elementwise() >= self.v2,
-            self.v1.x >= self.v2.x and self.v1.y >= self.v2.y,
-        )
-        self.assertEqual(
-            self.v1.elementwise() <= self.v2,
-            self.v1.x <= self.v2.x and self.v1.y <= self.v2.y,
-        )
-        self.assertEqual(
-            self.v1.elementwise() == self.v2,
-            self.v1.x == self.v2.x and self.v1.y == self.v2.y,
-        )
-        self.assertEqual(
-            self.v1.elementwise() != self.v2,
-            self.v1.x != self.v2.x and self.v1.y != self.v2.y,
-        )
-        # behaviour for "vector op elementwise"
-        self.assertEqual(self.v2 + self.v1.elementwise(), self.v2 + self.v1)
-        self.assertEqual(self.v2 - self.v1.elementwise(), self.v2 - self.v1)
-        self.assertEqual(
-            self.v2 * self.v1.elementwise(),
-            (self.v2.x * self.v1.x, self.v2.y * self.v1.y),
-        )
-        self.assertEqual(
-            self.v2 / self.v1.elementwise(),
-            (self.v2.x / self.v1.x, self.v2.y / self.v1.y),
-        )
-        self.assertEqual(
-            self.v2 // self.v1.elementwise(),
-            (self.v2.x // self.v1.x, self.v2.y // self.v1.y),
-        )
-        self.assertEqual(
-            self.v2 ** self.v1.elementwise(),
-            (self.v2.x**self.v1.x, self.v2.y**self.v1.y),
-        )
-        self.assertEqual(
-            self.v2 % self.v1.elementwise(),
-            (self.v2.x % self.v1.x, self.v2.y % self.v1.y),
-        )
-        self.assertEqual(
-            self.v2 < self.v1.elementwise(),
-            self.v2.x < self.v1.x and self.v2.y < self.v1.y,
-        )
-        self.assertEqual(
-            self.v2 > self.v1.elementwise(),
-            self.v2.x > self.v1.x and self.v2.y > self.v1.y,
-        )
-        self.assertEqual(
-            self.v2 <= self.v1.elementwise(),
-            self.v2.x <= self.v1.x and self.v2.y <= self.v1.y,
-        )
-        self.assertEqual(
-            self.v2 >= self.v1.elementwise(),
-            self.v2.x >= self.v1.x and self.v2.y >= self.v1.y,
-        )
-        self.assertEqual(
-            self.v2 == self.v1.elementwise(),
-            self.v2.x == self.v1.x and self.v2.y == self.v1.y,
-        )
-        self.assertEqual(
-            self.v2 != self.v1.elementwise(),
-            self.v2.x != self.v1.x and self.v2.y != self.v1.y,
-        )
-
-        # behaviour for "elementwise op elementwise"
-        self.assertEqual(
-            self.v2.elementwise() + self.v1.elementwise(), self.v2 + self.v1
-        )
-        self.assertEqual(
-            self.v2.elementwise() - self.v1.elementwise(), self.v2 - self.v1
-        )
-        self.assertEqual(
-            self.v2.elementwise() * self.v1.elementwise(),
-            (self.v2.x * self.v1.x, self.v2.y * self.v1.y),
-        )
-        self.assertEqual(
-            self.v2.elementwise() / self.v1.elementwise(),
-            (self.v2.x / self.v1.x, self.v2.y / self.v1.y),
-        )
-        self.assertEqual(
-            self.v2.elementwise() // self.v1.elementwise(),
-            (self.v2.x // self.v1.x, self.v2.y // self.v1.y),
-        )
-        self.assertEqual(
-            self.v2.elementwise() ** self.v1.elementwise(),
-            (self.v2.x**self.v1.x, self.v2.y**self.v1.y),
-        )
-        self.assertEqual(
-            self.v2.elementwise() % self.v1.elementwise(),
-            (self.v2.x % self.v1.x, self.v2.y % self.v1.y),
-        )
-        self.assertEqual(
-            self.v2.elementwise() < self.v1.elementwise(),
-            self.v2.x < self.v1.x and self.v2.y < self.v1.y,
-        )
-        self.assertEqual(
-            self.v2.elementwise() > self.v1.elementwise(),
-            self.v2.x > self.v1.x and self.v2.y > self.v1.y,
-        )
-        self.assertEqual(
-            self.v2.elementwise() <= self.v1.elementwise(),
-            self.v2.x <= self.v1.x and self.v2.y <= self.v1.y,
-        )
-        self.assertEqual(
-            self.v2.elementwise() >= self.v1.elementwise(),
-            self.v2.x >= self.v1.x and self.v2.y >= self.v1.y,
-        )
-        self.assertEqual(
-            self.v2.elementwise() == self.v1.elementwise(),
-            self.v2.x == self.v1.x and self.v2.y == self.v1.y,
-        )
-        self.assertEqual(
-            self.v2.elementwise() != self.v1.elementwise(),
-            self.v2.x != self.v1.x and self.v2.y != self.v1.y,
-        )
-
-        # other behaviour
-        self.assertEqual(abs(self.v1.elementwise()), (abs(self.v1.x), abs(self.v1.y)))
-        self.assertEqual(-self.v1.elementwise(), -self.v1)
-        self.assertEqual(+self.v1.elementwise(), +self.v1)
-        self.assertEqual(bool(self.v1.elementwise()), bool(self.v1))
-        self.assertEqual(bool(Vector2().elementwise()), bool(Vector2()))
-        self.assertEqual(self.zeroVec.elementwise() ** 0, (1, 1))
-        self.assertRaises(ValueError, lambda: pow(Vector2(-1, 0).elementwise(), 1.2))
-        self.assertRaises(ZeroDivisionError, lambda: self.zeroVec.elementwise() ** -1)
 
     def test_elementwise(self):
         v1 = self.v1
@@ -1098,15 +937,6 @@ class Vector2TypeTest(unittest.TestCase):
         self.assertEqual(expected.x, actual.x)
         self.assertEqual(expected.y, actual.y)
 
-    def test_project_v2_raises_if_other_has_zero_length(self):
-        """Check if exception is raise when projected on vector has zero length."""
-        # arrange
-        v = Vector2(2, 3)
-        other = Vector2(0, 0)
-
-        # act / assert
-        self.assertRaises(ValueError, v.project, other)
-
     def test_project_v2_onto_other_as_tuple(self):
         """Project onto other tuple as vector."""
         # arrange
@@ -1271,15 +1101,8 @@ class Vector3TypeTest(unittest.TestCase):
         self.assertEqual(v.z, 3.0)
 
     def testConstructionMissing(self):
-        def assign_missing_value():
-            v = Vector3(1, 2)
-
-        self.assertRaises(ValueError, assign_missing_value)
-
-        def assign_missing_value():
-            v = Vector3(x=1, y=2)
-
-        self.assertRaises(ValueError, assign_missing_value)
+        self.assertRaises(ValueError, Vector3, 1, 2)
+        self.assertRaises(ValueError, Vector3, x=1, y=2)
 
     def testAttributeAccess(self):
         tmp = self.v1.x
@@ -1895,23 +1718,144 @@ class Vector3TypeTest(unittest.TestCase):
     def test_distance_to(self):
         diff = self.v1 - self.v2
         self.assertEqual(self.e1.distance_to(self.e2), math.sqrt(2))
+        self.assertEqual(self.e1.distance_to((0, 1, 0)), math.sqrt(2))
+        self.assertEqual(self.e1.distance_to([0, 1, 0]), math.sqrt(2))
         self.assertEqual(
             self.v1.distance_to(self.v2),
             math.sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z),
         )
+        self.assertEqual(
+            self.v1.distance_to(self.t2),
+            math.sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z),
+        )
+        self.assertEqual(
+            self.v1.distance_to(self.l2),
+            math.sqrt(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z),
+        )
         self.assertEqual(self.v1.distance_to(self.v1), 0)
+        self.assertEqual(self.v1.distance_to(self.t1), 0)
+        self.assertEqual(self.v1.distance_to(self.l1), 0)
         self.assertEqual(self.v1.distance_to(self.v2), self.v2.distance_to(self.v1))
+        self.assertEqual(self.v1.distance_to(self.t2), self.v2.distance_to(self.t1))
+        self.assertEqual(self.v1.distance_to(self.l2), self.v2.distance_to(self.l1))
+
+    def test_distance_to_exceptions(self):
+        v2 = Vector2(10, 10)
+        v3 = Vector3(1, 1, 1)
+
+        # illegal distance Vector3-Vector2 / Vector2-Vector3
+        self.assertRaises(ValueError, v2.distance_to, v3)
+        self.assertRaises(ValueError, v3.distance_to, v2)
+
+        # distance to illegal tuple/list positions
+        self.assertRaises(ValueError, v2.distance_to, (1, 1, 1))
+        self.assertRaises(ValueError, v2.distance_to, (1, 1, 0))
+        self.assertRaises(ValueError, v2.distance_to, (1,))
+        self.assertRaises(ValueError, v2.distance_to, [1, 1, 1])
+        self.assertRaises(ValueError, v2.distance_to, [1, 1, 0])
+        self.assertRaises(
+            ValueError,
+            v2.distance_to,
+            [
+                1,
+            ],
+        )
+        self.assertRaises(ValueError, v2.distance_to, (1, 1, 1))
+        # vec3
+        self.assertRaises(ValueError, v3.distance_to, (1, 1))
+        self.assertRaises(ValueError, v3.distance_to, (1,))
+        self.assertRaises(ValueError, v3.distance_to, [1, 1])
+        self.assertRaises(
+            ValueError,
+            v3.distance_to,
+            [
+                1,
+            ],
+        )
+
+        # illegal types as positions
+        self.assertRaises(TypeError, v2.distance_to, (1, "hello"))
+        self.assertRaises(TypeError, v2.distance_to, ([], []))
+        self.assertRaises(TypeError, v2.distance_to, (1, ("hello",)))
+
+        # illegal args number
+        self.assertRaises(TypeError, v2.distance_to)
+        self.assertRaises(TypeError, v2.distance_to, (1, 1), (1, 2))
+        self.assertRaises(TypeError, v2.distance_to, (1, 1), (1, 2), 1)
+
+    def test_distance_squared_to_exceptions(self):
+        v2 = Vector2(10, 10)
+        v3 = Vector3(1, 1, 1)
+        dist_t = v2.distance_squared_to
+        dist_t3 = v3.distance_squared_to
+        # illegal distance Vector3-Vector2 / Vector2-Vector3
+        self.assertRaises(ValueError, dist_t, v3)
+        self.assertRaises(ValueError, dist_t3, v2)
+
+        # distance to illegal tuple/list positions
+        self.assertRaises(ValueError, dist_t, (1, 1, 1))
+        self.assertRaises(ValueError, dist_t, (1, 1, 0))
+        self.assertRaises(ValueError, dist_t, (1,))
+        self.assertRaises(ValueError, dist_t, [1, 1, 1])
+        self.assertRaises(ValueError, dist_t, [1, 1, 0])
+        self.assertRaises(
+            ValueError,
+            dist_t,
+            [
+                1,
+            ],
+        )
+        self.assertRaises(ValueError, dist_t, (1, 1, 1))
+        # vec3
+        self.assertRaises(ValueError, dist_t3, (1, 1))
+        self.assertRaises(ValueError, dist_t3, (1,))
+        self.assertRaises(ValueError, dist_t3, [1, 1])
+        self.assertRaises(
+            ValueError,
+            dist_t3,
+            [
+                1,
+            ],
+        )
+
+        # illegal types as positions
+        self.assertRaises(TypeError, dist_t, (1, "hello"))
+        self.assertRaises(TypeError, dist_t, ([], []))
+        self.assertRaises(TypeError, dist_t, (1, ("hello",)))
+
+        # illegal args number
+        self.assertRaises(TypeError, dist_t)
+        self.assertRaises(TypeError, dist_t, (1, 1), (1, 2))
+        self.assertRaises(TypeError, dist_t, (1, 1), (1, 2), 1)
 
     def test_distance_squared_to(self):
         diff = self.v1 - self.v2
         self.assertEqual(self.e1.distance_squared_to(self.e2), 2)
+        self.assertEqual(self.e1.distance_squared_to((0, 1, 0)), 2)
+        self.assertEqual(self.e1.distance_squared_to([0, 1, 0]), 2)
         self.assertAlmostEqual(
             self.v1.distance_squared_to(self.v2),
             diff.x * diff.x + diff.y * diff.y + diff.z * diff.z,
         )
+        self.assertAlmostEqual(
+            self.v1.distance_squared_to(self.t2),
+            diff.x * diff.x + diff.y * diff.y + diff.z * diff.z,
+        )
+        self.assertAlmostEqual(
+            self.v1.distance_squared_to(self.l2),
+            diff.x * diff.x + diff.y * diff.y + diff.z * diff.z,
+        )
         self.assertEqual(self.v1.distance_squared_to(self.v1), 0)
+        self.assertEqual(self.v1.distance_squared_to(self.t1), 0)
+        self.assertEqual(self.v1.distance_squared_to(self.l1), 0)
         self.assertEqual(
             self.v1.distance_squared_to(self.v2), self.v2.distance_squared_to(self.v1)
+        )
+        self.assertEqual(
+            self.v1.distance_squared_to(self.t2), self.v2.distance_squared_to(self.t1)
+        )
+        self.assertEqual(
+            self.v1.distance_squared_to(self.l2), self.v2.distance_squared_to(self.l1)
         )
 
     def test_swizzle(self):
