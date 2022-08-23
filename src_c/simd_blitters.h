@@ -40,6 +40,8 @@ blit_blend_premultiplied_sse2(SDL_BlitInfo *info);
 #endif /* (defined(__SSE2__) || defined(PG_ENABLE_ARM_NEON)) */
 
 void
+alphablit_alpha_avx2_argb_no_surf_alpha_opaque_dst(SDL_BlitInfo *info);
+void
 blit_blend_rgba_mul_avx2(SDL_BlitInfo *info);
 void
 blit_blend_rgb_mul_avx2(SDL_BlitInfo *info);
