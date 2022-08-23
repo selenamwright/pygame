@@ -194,6 +194,15 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                             src->format->Bmask == dst->format->Bmask) {
 /* If our source and destination are the same ARGB 32bit
    format we can use SSE2 to speed up the blend */
+                            if ((SDL_HasAVX2() == SDL_TRUE) && (src != dst)) {
+                                if (info.src_blanket_alpha == 255 &&
+                                    !(SDL_ISPIXELFORMAT_ALPHA(
+                                          dst->format->format) &&
+                                      info.dst_blend != SDL_BLENDMODE_NONE)) {
+                                    alphablit_alpha_avx2_argb_no_surf_alpha_opaque_dst(&info);
+                                    break;
+                                }
+                            }
 #if PG_ENABLE_ARM_NEON
                             if ((SDL_HasNEON() == SDL_TRUE) && (src != dst)) {
                                 if (info.src_blanket_alpha != 255) {
