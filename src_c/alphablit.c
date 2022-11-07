@@ -40,7 +40,7 @@
 
 // Check GCC
 #if __GNUC__
-#if __x86_64__ || __ppc64__
+#if __x86_64__ || __ppc64__ || __aarch64__
 #define ENV64BIT
 #endif
 #endif
@@ -259,7 +259,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Bmask == dst->format->Bmask &&
                         !(src->format->Amask != 0 && dst->format->Amask != 0 &&
                           src->format->Amask != dst->format->Amask) &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgb_add_avx2(&info);
                         break;
                     }
@@ -304,7 +304,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Bmask == dst->format->Bmask &&
                         !(src->format->Amask != 0 && dst->format->Amask != 0 &&
                           src->format->Amask != dst->format->Amask) &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgb_sub_avx2(&info);
                         break;
                     }
@@ -349,7 +349,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Bmask == dst->format->Bmask &&
                         !(src->format->Amask != 0 && dst->format->Amask != 0 &&
                           src->format->Amask != dst->format->Amask) &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgb_mul_avx2(&info);
                         break;
                     }
@@ -394,7 +394,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Bmask == dst->format->Bmask &&
                         !(src->format->Amask != 0 && dst->format->Amask != 0 &&
                           src->format->Amask != dst->format->Amask) &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgb_min_avx2(&info);
                         break;
                     }
@@ -439,7 +439,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Bmask == dst->format->Bmask &&
                         !(src->format->Amask != 0 && dst->format->Amask != 0 &&
                           src->format->Amask != dst->format->Amask) &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgb_max_avx2(&info);
                         break;
                     }
@@ -484,7 +484,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Gmask == dst->format->Gmask &&
                         src->format->Bmask == dst->format->Bmask &&
                         info.src_blend != SDL_BLENDMODE_NONE &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgba_add_avx2(&info);
                         break;
                     }
@@ -526,7 +526,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Gmask == dst->format->Gmask &&
                         src->format->Bmask == dst->format->Bmask &&
                         info.src_blend != SDL_BLENDMODE_NONE &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgba_sub_avx2(&info);
                         break;
                     }
@@ -568,7 +568,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Gmask == dst->format->Gmask &&
                         src->format->Bmask == dst->format->Bmask &&
                         info.src_blend != SDL_BLENDMODE_NONE &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgba_mul_avx2(&info);
                         break;
                     }
@@ -610,7 +610,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Gmask == dst->format->Gmask &&
                         src->format->Bmask == dst->format->Bmask &&
                         info.src_blend != SDL_BLENDMODE_NONE &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgba_min_avx2(&info);
                         break;
                     }
@@ -652,7 +652,7 @@ SoftBlitPyGame(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                         src->format->Gmask == dst->format->Gmask &&
                         src->format->Bmask == dst->format->Bmask &&
                         info.src_blend != SDL_BLENDMODE_NONE &&
-                        SDL_HasAVX2() && (src != dst)) {
+                        pg_has_avx2() && (src != dst)) {
                         blit_blend_rgba_max_avx2(&info);
                         break;
                     }
@@ -3061,4 +3061,26 @@ pygame_AlphaBlit(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst,
                  SDL_Rect *dstrect, int the_args)
 {
     return pygame_Blit(src, srcrect, dst, dstrect, the_args);
+}
+
+#define _PG_WARN_SIMD(s)                                              \
+    if (pg_##s##_at_runtime_but_uncompiled()) {                       \
+        if (PyErr_WarnEx(                                             \
+                PyExc_RuntimeWarning,                                 \
+                "Your system is " #s " capable but pygame was not "   \
+                "built with support for it. The performance of some " \
+                "of your blits could be adversely affected",          \
+                1) < 0) {                                             \
+            return -1;                                                \
+        }                                                             \
+    }
+
+/* On error, returns -1 with python error set. */
+int
+pg_warn_simd_at_runtime_but_uncompiled()
+{
+    _PG_WARN_SIMD(avx2)
+    _PG_WARN_SIMD(sse2)
+    _PG_WARN_SIMD(neon)
+    return 0;
 }

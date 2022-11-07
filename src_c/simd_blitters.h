@@ -8,6 +8,13 @@
 #define PG_ENABLE_ARM_NEON 1
 #endif
 
+int
+pg_sse2_at_runtime_but_uncompiled();
+int
+pg_neon_at_runtime_but_uncompiled();
+int
+pg_avx2_at_runtime_but_uncompiled();
+
 #if (defined(__SSE2__) || defined(PG_ENABLE_ARM_NEON))
 void
 alphablit_alpha_sse2_argb_surf_alpha(SDL_BlitInfo *info);
@@ -39,6 +46,8 @@ void
 blit_blend_premultiplied_sse2(SDL_BlitInfo *info);
 #endif /* (defined(__SSE2__) || defined(PG_ENABLE_ARM_NEON)) */
 
+int
+pg_has_avx2();
 void
 blit_blend_rgba_mul_avx2(SDL_BlitInfo *info);
 void
